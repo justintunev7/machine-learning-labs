@@ -89,7 +89,6 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         return self.weights
 
 # argv = [perceptron.py, import_arff_file]
-# if len(sys.argv) > 1:
 mat = arff.Arff("../data/perceptron/debug/linsep2nonorigin.arff",label_count=1)
 data = mat.data[:,0:-1]
 labels = mat.data[:,-1].reshape(-1,1)
@@ -98,23 +97,3 @@ PClass.fit(data,labels)
 Accuracy = PClass.score(data,labels)
 print("Accuray = [{:.2f}]".format(Accuracy))
 print("Final Weights =",PClass.get_weights())
-
-
-
-
-
-
-
-    # arff_obj = arff.Arff(arff=sys.argv[1], label_count=3)
-    # perceptron = PerceptronClassifier(.1, True)
-    # y = np.empty(0)
-    # for i, row in enumerate(arff_obj):
-    #     if i==0:
-    #         X = np.array(row[0:-1])
-    #     else:
-    #         X = np.vstack((X, row[0:-1]))
-    #     y = np.append(y, row[-1])
-    # results = perceptron.fit(X, y)
-    # for i in range(10):
-    #     results = perceptron.fit(X, y, results.get_weights())
-    # print(results.get_weights())
