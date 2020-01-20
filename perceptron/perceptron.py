@@ -1,4 +1,5 @@
 import arff
+import math
 import numpy as np
 import sys
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -37,6 +38,8 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
     def fit(self, X, y, initial_weights=None):
         initial_weights = self.initialize_weights(len(X[0]) + 1) if initial_weights is None else initial_weights
         for j in range(self.deterministic):
+            # X, y = self._shuffle_data(X, y)
+            # print(np.column_stack((X, y)))
             for i in range(len(X)):
                 net = initial_weights.dot(np.append(X[i], 1))
                 z = 1 if net > 0 else 0 # where z is the output found with current model
@@ -54,7 +57,12 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         #         Predicted target values per element in X.
         # """
     def predict(self, X):
-        pass
+        results = []
+        for i in range(len(X)):
+            net = self.weights.dot(np.append(X[i], 1))
+            z = 1 if net > 0 else 0 # where z is the output found with current model
+            results.append(z)
+        return results#, len(reuslts)
 
 
         # """ Initialize weights for perceptron. Don't forget the bias!
@@ -73,8 +81,11 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         #         Mean accuracy of self.predict(X) wrt. y.
         # """
     def score(self, X, y):
-    
-        return 0
+        predicted_results = self.predict(X)
+        loss = 0
+        for i, result in enumerate(predicted_results):
+            loss += abs((y[i][0] - result))
+        return 1 - loss/len(predicted_results)
 
 
         # """ Shuffle the data! This _ prefix suggests that this method should only be called internally.
@@ -82,7 +93,9 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         #      shuffling X and y exactly the same way, independently.
         # """
     def _shuffle_data(self, X, y):
-        pass
+        combined = np.column_stack((X, y))
+        np.random.shuffle(combined)
+        return (combined[:, 0:-1], combined[:,-1])
 
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
@@ -95,5 +108,5 @@ labels = mat.data[:,-1].reshape(-1,1)
 PClass = PerceptronClassifier(lr=0.1,shuffle=False,deterministic=10)
 PClass.fit(data,labels)
 Accuracy = PClass.score(data,labels)
-print("Accuray = [{:.2f}]".format(Accuracy))
+print("Accuracy = [{:.2f}]".format(Accuracy))
 print("Final Weights =",PClass.get_weights())
