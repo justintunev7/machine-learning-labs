@@ -18,18 +18,13 @@ from sklearn.linear_model import Perceptron
 
 class PerceptronClassifier(BaseEstimator,ClassifierMixin):
 
-        # """ Initialize class with chosen hyperparameters.
-        # Args:
-        #     lr (float): A learning rate / step size.
-        #     shuffle: Whether to shuffle the training data each epoch. DO NOT SHUFFLE for evaluation / debug datasets.
-        # """
-    # default for deterministic is 10,000. For the data we are running, if training lasts 10,000 epochs, we should assume that it will never stop
     def __init__(self, lr=.1, shuffle=True, deterministic=10000):
         self.lr = lr
         self.shuffle = shuffle
         self.deterministic = deterministic
         self.stopping_count = 30
         self.epochs = 0
+        self.misclassifications = []
 
     def split_data_sets(self, data, labels):
         data, labels = self._shuffle_data(data, labels)
@@ -40,14 +35,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         test_labels = labels[train_size:]
         return (train_data, train_labels, test_data, test_labels)
 
-        # """ Fit the data; run the algorithm and adjust the weights to find a good solution
-        # Args:
-        #     X (array-like): A 2D numpy array with the training data, excluding targets
-        #     y (array-like): A 2D (1D?) numpy array with the training targets
-        #     initial_weights (array-like): allows the user to provide initial weights
-        # Returns:
-        #     self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
-        # """
+
     def fit(self, X, y, initial_weights=None):
         self.weights = initial_weights = self.initialize_weights(len(X[0]) + 1) if initial_weights is None else initial_weights
         count = 0
@@ -69,21 +57,15 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
             self.weights = initial_weights
             current_score = self.score(X,y)
             if (current_score <= prev_score+.01):
+                self.misclassifications.append(1-prev_score)
                 count += 1
                 self.weights = temp
             else:
+                self.misclassifications.append(1-current_score)
                 prev_score = current_score
                 count = 0
         return self
 
-
-        # """ Predict all classes for a dataset X
-        # Args:
-        #     X (array-like): A 2D numpy array with the training data, excluding targets
-        # Returns:
-        #     array, shape (n_samples,)
-        #         Predicted target values per element in X.
-        # """
     def predict(self, X):
         results = []
         for i in range(len(X)):
@@ -93,41 +75,25 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         return results#, len(reuslts)
 
 
-        # """ Initialize weights for perceptron. Don't forget the bias!
-        # Returns:
-        # """
     def initialize_weights(self, size = 2):
         return np.zeros(size)
 
 
-        # """ Return accuracy of model on a given dataset. Must implement own score function.
-        # Args:
-        #     X (array-like): A 2D numpy array with data, excluding targets
-        #     y (array-like): A 2D numpy array with targets
-        # Returns:
-        #     score : float
-        #         Mean accuracy of self.predict(X) wrt. y.
-        # """
     def score(self, X, y):
         predicted_results = self.predict(X)
         loss = 0
         for i, result in enumerate(predicted_results):
             loss += abs((y[i][0] - result))
-        print("loss=",loss)
         return 1 - loss/len(predicted_results)
 
 
-        # """ Shuffle the data! This _ prefix suggests that this method should only be called internally.
-        #     It might be easier to concatenate X & y and shuffle a single 2D array, rather than
-        #      shuffling X and y exactly the same way, independently.
-        # """
     def _shuffle_data(self, X, y):
         x_len = len(X[0])
         combined = np.column_stack((X, y))
         np.random.shuffle(combined)
         return (combined[:, 0:x_len], combined[:,x_len:])
 
-    def plot_results(self, X, y):
+    def plot_descision_line(self, X, y):
         a = np.empty((0,len(X[0])))
         b = np.empty((0,len(X[0])))
         for i in range(len(X)):
@@ -145,6 +111,18 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         time.sleep(2)
         plt.show()
 
+    def plot_misclassification_rate(self, misclass):
+        max_epoch = max(len(x) for x in misclass)
+        y = []
+        for i in range(max_epoch):
+            temp = []
+            for j in range(len(misclass)):
+                if len(misclass[j]) > i: temp.append(misclass[j][i])
+            # print(len(temp))
+            y.append(sum(temp)/(len(temp)))
+        plt.plot(range(len(y)), y)
+        plt.show()
+
     ### Not required by sk-learn but required by us for grading. Returns the weights.
     def get_weights(self):
         return self.weights
@@ -152,10 +130,13 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
     # Returns the number of epochs done during training.
     def get_epochs(self):
         return self.epochs
+    
+    def get_missclassifications(self):
+        return self.misclassifications
 
-# # create training/testing sets
-# # mat = arff.Arff("../data/perceptron/debug/linsep2nonorigin.arff",label_count=1)
-# # mat = arff.Arff("../data/perceptron/evaluation/data_banknote_authentication.arff",label_count=1)
+# create training/testing sets
+# mat = arff.Arff("../data/perceptron/debug/linsep2nonorigin.arff",label_count=1)
+# mat = arff.Arff("../data/perceptron/evaluation/data_banknote_authentication.arff",label_count=1)
 # mat = arff.Arff("./test2_data.arff",label_count=1)
 # data = mat.data[:,0:-1]
 # data = mat.data[:,0:-1]
@@ -179,16 +160,36 @@ elif len(sys.argv) == 3:
 else:
     file, lr, deterministic = "./linsep2nonorigin.arff", .1, 10
     PClass = PerceptronClassifier(lr=float(lr),shuffle=False,deterministic=int(deterministic))
+
 mat = arff.Arff(file,label_count=1)
 data = mat.data[:,0:-1]
+data = mat.data[:,0:-1]
 labels = mat.data[:,-1].reshape(-1,1)
-# lr = sys.argv[3]
-
-PClass.fit(data,labels)
-Accuracy = PClass.score(data,labels)
 print("File =",file)
 print("Learning rate =",lr)
-print("Number of Epochs =",PClass.get_epochs())
-print("Accuracy = [{:.2f}]".format(Accuracy))
-print("Final Weights =",PClass.get_weights())
-PClass.plot_results(data, labels)
+misclassifications = []
+for i in range(5):
+    PClass = PerceptronClassifier(lr=float(lr))
+    train_data, train_labels, test_data, test_labels = PClass.split_data_sets(data,labels)
+    PClass.fit(train_data,train_labels)
+    test_accuracy = PClass.score(test_data,test_labels)
+    train_accuracy = PClass.score(train_data,train_labels)
+    print("\n")
+    print("Number of Epochs =",PClass.get_epochs())
+    print("Training Accuracy = [{:.2f}]".format(train_accuracy))
+    print("Test Accuracy = [{:.2f}]".format(test_accuracy))
+    print("Final Weights =",['{:.2f}'.format(weight) for weight in PClass.get_weights()])
+    misclassifications.append(PClass.get_missclassifications())
+# print(misclassifications)
+PClass.plot_misclassification_rate(misclassifications)
+# for i in misclassifications:
+#     print(['{:.2f}'.format(a) for a in i])
+
+# mat = arff.Arff(file,label_count=1)
+# data = mat.data[:,0:-1]
+# labels = mat.data[:,-1].reshape(-1,1)
+
+# PClass.fit(data,labels)
+# Accuracy = PClass.score(data,labels)
+
+# PClass.plot_descision_line(data, labels)
