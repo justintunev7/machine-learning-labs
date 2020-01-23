@@ -3,26 +3,17 @@ import math
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 from sklearn.base import BaseEstimator, ClassifierMixin
-
-### NOTE: The only methods you are required to have are:
-#   * predict
-#   * fit
-#   * score
-#   * get_weights
-#   They must take at least the parameters below, exactly as specified. The output of
-#   get_weights must be in the same format as the example provided.
 
 from sklearn.linear_model import Perceptron
 
 class PerceptronClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self, lr=.1, shuffle=True, deterministic=10000):
+    def __init__(self, lr=.1, shuffle=True, deterministic=10000, stopping_count=30):
         self.lr = lr
         self.shuffle = shuffle
         self.deterministic = deterministic
-        self.stopping_count = 30
+        self.stopping_count = stopping_count
         self.epochs = 0
         self.misclassifications = []
 
@@ -56,7 +47,8 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
             temp = self.weights
             self.weights = initial_weights
             current_score = self.score(X,y)
-            if (current_score <= prev_score+.01):
+            # only update if the current_score is better than the prev_score
+            if (current_score <= prev_score+.001) and self.deterministic==10000:
                 self.misclassifications.append(1-prev_score)
                 count += 1
                 self.weights = temp
@@ -116,11 +108,14 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         y = []
         for i in range(max_epoch):
             temp = []
+            # get average value between all lists
             for j in range(len(misclass)):
                 if len(misclass[j]) > i: temp.append(misclass[j][i])
-            # print(len(temp))
             y.append(sum(temp)/(len(temp)))
         plt.plot(range(len(y)), y)
+        plt.xlabel("Epochs completed")
+        plt.ylabel("Miscallification Rate")
+        plt.title("Miscallification rate vs epochs completed")
         plt.show()
 
     ### Not required by sk-learn but required by us for grading. Returns the weights.
@@ -133,63 +128,3 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
     
     def get_missclassifications(self):
         return self.misclassifications
-
-# create training/testing sets
-# mat = arff.Arff("../data/perceptron/debug/linsep2nonorigin.arff",label_count=1)
-# mat = arff.Arff("../data/perceptron/evaluation/data_banknote_authentication.arff",label_count=1)
-# mat = arff.Arff("./test2_data.arff",label_count=1)
-# data = mat.data[:,0:-1]
-# data = mat.data[:,0:-1]
-# labels = mat.data[:,-1].reshape(-1,1)
-# PClass = PerceptronClassifier(lr=0.1,shuffle=False,deterministic=10)
-# train_data, train_labels, test_data, test_labels = PClass.split_data_sets(data,labels)
-# PClass.fit(train_data,train_labels)
-# Accuracy = PClass.score(test_data,test_labels)
-# print("Accuracy = [{:.2f}]".format(Accuracy))
-# print("Final Weights =",PClass.get_weights())
-
-# argv = [perceptron.py, import_arff_file]
-# mat = arff.Arff("../data/perceptron/debug/linsep2nonorigin.arff",label_count=1)
-# mat = arff.Arff("../data/perceptron/evaluation/data_banknote_authentication.arff",label_count=1) "./test2_data.arff"
-if len(sys.argv) == 4:
-    file, lr, deterministic = sys.argv[1:]
-    PClass = PerceptronClassifier(lr=float(lr),deterministic=int(deterministic))
-elif len(sys.argv) == 3:
-    file, lr = sys.argv[1:]
-    PClass = PerceptronClassifier(lr=float(lr))
-else:
-    file, lr, deterministic = "./linsep2nonorigin.arff", .1, 10
-    PClass = PerceptronClassifier(lr=float(lr),shuffle=False,deterministic=int(deterministic))
-
-mat = arff.Arff(file,label_count=1)
-data = mat.data[:,0:-1]
-data = mat.data[:,0:-1]
-labels = mat.data[:,-1].reshape(-1,1)
-print("File =",file)
-print("Learning rate =",lr)
-misclassifications = []
-for i in range(5):
-    PClass = PerceptronClassifier(lr=float(lr))
-    train_data, train_labels, test_data, test_labels = PClass.split_data_sets(data,labels)
-    PClass.fit(train_data,train_labels)
-    test_accuracy = PClass.score(test_data,test_labels)
-    train_accuracy = PClass.score(train_data,train_labels)
-    print("\n")
-    print("Number of Epochs =",PClass.get_epochs())
-    print("Training Accuracy = [{:.2f}]".format(train_accuracy))
-    print("Test Accuracy = [{:.2f}]".format(test_accuracy))
-    print("Final Weights =",['{:.2f}'.format(weight) for weight in PClass.get_weights()])
-    misclassifications.append(PClass.get_missclassifications())
-# print(misclassifications)
-PClass.plot_misclassification_rate(misclassifications)
-# for i in misclassifications:
-#     print(['{:.2f}'.format(a) for a in i])
-
-# mat = arff.Arff(file,label_count=1)
-# data = mat.data[:,0:-1]
-# labels = mat.data[:,-1].reshape(-1,1)
-
-# PClass.fit(data,labels)
-# Accuracy = PClass.score(data,labels)
-
-# PClass.plot_descision_line(data, labels)
