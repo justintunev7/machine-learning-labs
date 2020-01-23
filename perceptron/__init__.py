@@ -76,17 +76,17 @@ def part_three_a():
     print("\n\npart_three_a")
     data, labels = setup_data("./test1_data.arff")
     for lr in [.001, .01, .1]:
-        PClass = PerceptronClassifier(lr=lr,shuffle=False,deterministic=10)
+        PClass = PerceptronClassifier(lr=lr)
         PClass.fit(data,labels)
         Accuracy = PClass.score(data,labels)    
         print("Learning Rate =",lr,"Accuracy = [{:.2f}]".format(Accuracy),"Final Weights =",PClass.get_weights())
     plot_descision_line(data, labels, PClass.get_weights())
 
 def part_three_b():
-    print("\n\npart_one_b")
+    print("\n\npart_three_b")
     data, labels = setup_data("./test2_data.arff")
     for lr in [.001, .01, .1]:
-        PClass = PerceptronClassifier(lr=lr,shuffle=False,deterministic=10)
+        PClass = PerceptronClassifier(lr=lr)
         PClass.fit(data,labels)
         Accuracy = PClass.score(data,labels)    
         print("Learning Rate =",lr,"Accuracy = [{:.2f}]".format(Accuracy),"Final Weights =",PClass.get_weights())

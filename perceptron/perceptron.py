@@ -48,7 +48,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
             self.weights = initial_weights
             current_score = self.score(X,y)
             # only update if the current_score is better than the prev_score
-            if (current_score <= prev_score+.001) and self.deterministic==10000:
+            if (current_score <= prev_score+.01) and self.deterministic==10000:
                 self.misclassifications.append(1-prev_score)
                 count += 1
                 self.weights = temp
