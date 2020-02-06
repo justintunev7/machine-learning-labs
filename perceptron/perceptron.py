@@ -26,7 +26,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
         test_labels = labels[train_size:]
         return (train_data, train_labels, test_data, test_labels)
 
-
+    # X is a list of input data, y is a list of results
     def fit(self, X, y, initial_weights=None):
         self.weights = initial_weights = self.initialize_weights(len(X[0]) + 1) if initial_weights is None else initial_weights
         count = 0
@@ -64,7 +64,7 @@ class PerceptronClassifier(BaseEstimator,ClassifierMixin):
             net = self.weights.dot(np.append(X[i], 1))
             z = 1 if net > 0 else 0 # where z is the output found with current model
             results.append(z)
-        return results#, len(reuslts)
+        return results
 
 
     def initialize_weights(self, size = 2):
