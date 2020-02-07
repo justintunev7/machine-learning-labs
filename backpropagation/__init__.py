@@ -40,8 +40,9 @@ def plot_descision_line(X, y, weights):
 
 def part_one():
     # print("\n\npart_one_a")
-    data, labels = setup_data("./linsep2nonorigin.arff")
-    MLPClass = MLPClassifier(lr=0.1,shuffle=False, hidden_layer_widths=[1])
+    # data, labels = setup_data("./linsep2nonorigin.arff")
+    data, labels = setup_data("./test2.arff")
+    MLPClass = MLPClassifier(lr=0.1,shuffle=False, hidden_layer_widths=[3])
     MLPClass.fit(data,labels)
     # Accuracy = MLPClass.score(data,labels)
     # print("Accuracy = [{:.2f}]".format(Accuracy))
