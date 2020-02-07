@@ -17,35 +17,28 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.shuffle = shuffle
 
     # prev is input, curr is weights of current layer
-    def single_layer_forward_prop(self, prev, curr):
-        return np.matmul(prev, curr)
-    
+    def single_layer_forward_prop(self, input_values, weights):
+        return input_values.dot(weights)
+
     def forward(self, x):
-        pass
+        for i in range(len(self.weights)):
+            x = self.single_layer_forward_prop(np.append(x, 1), self.weights[i])
+        return x
 
     def fit(self, X, y, initial_weights=None):
-        print(X[0])
         self.weights = initial_weights = self.initialize_weights(len(X[0])) if initial_weights is None else initial_weights
-
-        for j in range(len(X)):
-            in_val = np.append(X[j], 1)
-
-            out = self.forward(in_val)
-
-
+        for i in range(len(X)):
+            y_hat = self.forward(X[i])
+            print(y_hat, y[i])
         return self
 
 
     def initialize_weights(self, input_size=2):
         self.network_size = [input_size, *self.hidden_layer_widths, 1]
-        print("NETWORK SIZE", self.network_size)
         self.weights = []
         for i in range(len(self.network_size)):
             # create 2D matrix for each layer of weights
             if i < len(self.network_size)-1: self.weights.append(np.random.normal(0, .5, [self.network_size[i]+1, self.network_size[i+1]]))
-        print("WEIGHTS=",self.shape(self.weights))
-
-        print(self.weights)
         return self.weights
 
     def shape(self, weights):
@@ -104,8 +97,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         for i, result in enumerate(predicted_results):
             loss += abs((y[i][0] - result))
         return 1 - loss/len(predicted_results)
-
-        return 0
 
     def _shuffle_data(self, X, y):
         """ Shuffle the data! This _ prefix suggests that this method should only be called internally.
