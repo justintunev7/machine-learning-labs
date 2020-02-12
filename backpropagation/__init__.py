@@ -41,15 +41,17 @@ def plot_descision_line(X, y, weights):
 def part_one():
     # print("\n\npart_one_a")
     # data, labels = setup_data("./linsep2nonorigin.arff")
-    data, labels = setup_data("./test2.arff")
-    MLPClass = MLPClassifier(lr=0.1,shuffle=False, hidden_layer_widths=[3])
-    MLPClass.fit(data,labels)
+    data, labels = setup_data("linsep2nonorigin.arff")
+    MLPClass = MLPClassifier(lr=0.1,shuffle=False, hidden_layer_widths=[4])
+    MLPClass.fit(data,labels, initial_weights=MLPClass.initialize_weights_to_zero(2))
     # Accuracy = MLPClass.score(data,labels)
     # print("Accuracy = [{:.2f}]".format(Accuracy))
     # print("Final Weights =",MLPClass.get_weights())
 
 def part_two():
-    pass
+    data, labels = setup_data("vowel.arff")
+    MLPClass = MLPClassifier(lr=0.1,shuffle=False, hidden_layer_widths=[3])
+    MLPClass.fit(data,labels)
 
 def part_three():
     pass

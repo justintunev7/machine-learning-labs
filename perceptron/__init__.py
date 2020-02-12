@@ -136,15 +136,31 @@ def part_five_b():
     PClass.fit(data, labels)
     print("PerceptronClassifier Testing accuracy",PClass.score(data, labels))
 
+def stock():
+    print("\n\nstocks")
+    # data, labels = setup_data("stock.arff")
+    # PClass = PerceptronClassifier(lr=0.1,shuffle=False,deterministic=10)
+    # PClass.fit(data,labels)
+    # Accuracy = PClass.score(data,labels)
+    # print("Accuracy = [{:.2f}]".format(Accuracy))
+    # print("Final Weights =",PClass.get_weights())
+
+
+    data, labels = scikit_setup_data( "./stock.arff")
+    PClass = Perceptron(max_iter=100, tol=.01, validation_fraction=.1)
+    PClass.fit(data, labels)
+    print("SCIKIT-LEARN Testing accuracy",PClass.score(data, labels))
+
 
 def main():
-    part_one_a()
-    part_one_b()
-    part_three_a()
-    part_three_b()
-    part_four()
-    part_five_a()
-    part_five_b()
+    # part_one_a()
+    # part_one_b()
+    # part_three_a()
+    # part_three_b()
+    # part_four()
+    # part_five_a()
+    # part_five_b()
+    stock()
 
 
 if __name__ == '__main__':
