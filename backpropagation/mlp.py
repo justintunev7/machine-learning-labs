@@ -1,16 +1,9 @@
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 
-class Node():
-    def __init__(self, num_weights):
-        self.weights = np.random.normal(0, .5, self.network_size)
-
-    def get_weights(self):
-        return self.weights
-
 class MLPClassifier(BaseEstimator,ClassifierMixin):
 
-    def __init__(self, hidden_layer_widths, lr=.1, momentum=0, shuffle=True, deterministic=1):
+    def __init__(self, hidden_layer_widths, lr=.1, momentum=0.5, shuffle=True, deterministic=10):
         self.hidden_layer_widths = np.array(hidden_layer_widths)
         self.lr = lr
         self.momentum = momentum
@@ -19,69 +12,40 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
     
 
     def backward(self, results, y_truth):
-        deltas = [None] * len(results)
+        deltas = [None] * len(self.weights)
         delta_weights = [None] * len(self.weights)
         for i, layer in reversed(list(enumerate(results))):
-            # print(i, len(results)-1)
             if i < len(results)-1:
-                # layer = layer[0:-1]
-                deltas[i] = (np.dot(self.weights[i][0:-1], deltas[i+1]))
-                print([*results[i], 1], deltas[i+1][:,None])
-                delta_weights[i] = np.transpose((np.multiply([*results[i], 1], deltas[i+1][:,None]) * self.lr))
-                # results[i] = np.append(results[i],1)
+                delta_weights[i] = np.transpose((np.multiply(results[i], deltas[i][:,None]) * self.lr)) + (self.momentum * self.prev_delta_weights[i])
+                if i > 0: deltas[i-1] = (np.dot(self.weights[i][0:-1], deltas[i])) * self.sigmoid_derivative(results[i][:-1])
             if i == (len(results) - 1):
-                deltas[i] = ((y_truth - layer) * self.sigmoid_derivative(layer))
-            # else: 
-            #     deltas[i] = (np.dot(self.weights[i+1], deltas[i+1]))
-        # delta_weights[0] = (np.multiply(deltas[1], [*results[0], 1]) * self.lr)
+                deltas[i-1] = (y_truth - layer) * self.sigmoid_derivative(layer)
+        print("DELTAS:\n", deltas)
+        self.prev_delta_weights = delta_weights
         return delta_weights
-
-    # def backward(self, results, y_truth):
-    #     deltas = [None] * len(results)
-    #     delta_weights = [None] * len(self.weights)
-    #     print("RESULTS",results)
-    #     print("YTRUTH", y_truth)
-    #     for i, layer in reversed(list(enumerate(results))):
-    #         deltas[i] = []
-    #         # remove bias
-    #         # if i == 0: break
-    #         if i < len(results)-1: layer = layer[0:-1]
-    #         delta_weights[i-1] = np.zeros((len(layer), len(results[i-1])))
-    #         for j, node in enumerate(layer):
-    #             print(i,j)
-    #             if i == (len(results) - 1): d = (y_truth - node) * self.sigmoid_derivative(node)
-    #             # for each node in next layer (k), get SUM(d(k) * W(current to k))
-    #             else:
-    #                 # print("WEIGHTS",self.weights[i][j])
-    #                 # print("DELTAS",deltas)
-    #                 d = np.sum(deltas[i+1] * self.weights[i][j]) * self.sigmoid_derivative(node)
-    #             deltas[i].append(d)
-    #             # print("DELTAS",deltas)
-    #             delta_weights[i-1][j] = np.multiply(results[i-1], d) * self.lr
-    #         delta_weights[i-1] = np.transpose(delta_weights[i-1])
-    #     return delta_weights
 
     def single_forward(self, input_values, weights):
         return input_values.dot(weights)
 
     def forward(self, x):
         results = []
-        results.append(x)
         for i in range(len(self.weights)): # for each layer in network
             x = np.append(x, 1)
+            results.append(x)
             x = self.single_forward(x, self.weights[i])
             if i < len(self.weights): 
                 x = self.sigmoid(x)
-            results.append(x)
+        results.append(x)
         return results
 
     def fit(self, X, y, initial_weights=None):
         self.weights = initial_weights = self.initialize_weights(len(X[0])) if initial_weights is None else initial_weights
         # for a in range(10):
         y_hat = []
+        self.prev_delta_weights = [0] * len(self.weights)
         for a in range(self.deterministic):
             print("--Epoch {}--".format(a+1))
-            for i in range(1):
+            for i in range(len(X)):
                 print("Weights:\n", self.weights)
                 print("Input vector:", X[i])
                 print("Target ouput:", y[i])
@@ -91,12 +55,12 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 y_hat.append(results[-1])
                 print("Back propagating...")
                 delta_weights = self.backward(results, y[i])
-                print("Deltas:", delta_weights)
-                print("WEIGHTS:", self.weights)
+                # print("Delta weights:", delta_weights)
+                # print("WEIGHTS:", self.weights)
                 print("Descending gradient...")
                 self.weights = np.add(self.weights, delta_weights)
                 print("Weights after:\n", self.weights)
-            print(self.accuracy(y_hat, y))
+            # print(self.accuracy(y_hat, y))
         return self
 
     def initialize_weights_to_zero(self, input_size):
@@ -104,7 +68,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
         self.weights = []
         for i in range(len(self.network_size)):
             # create 2D matrix for each layer of weights
-            # if i < len(self.network_size)-1: self.weights.append(np.random.normal(0, .1, [self.network_size[i]+1, self.network_size[i+1]]))
             if i < len(self.network_size)-1: self.weights.append(np.zeros((self.network_size[i]+1, self.network_size[i+1])))
         print(self.shape(self.weights))
         return self.weights
