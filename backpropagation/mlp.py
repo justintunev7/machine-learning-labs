@@ -59,7 +59,7 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
                 # print("WEIGHTS:", self.weights)
                 print("Descending gradient...")
                 self.weights = np.add(self.weights, delta_weights)
-                print("Weights after:\n", self.weights)
+                # print("Weights after:\n", self.weights)
             # print(self.accuracy(y_hat, y))
         return self
 

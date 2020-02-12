@@ -38,15 +38,37 @@ def plot_descision_line(X, y, weights):
     plt.show()
 
 
-def part_one():
+def debug():
     # print("\n\npart_one_a")
     # data, labels = setup_data("./linsep2nonorigin.arff")
     data, labels = setup_data("linsep2nonorigin.arff")
     MLPClass = MLPClassifier(lr=0.1,shuffle=False, hidden_layer_widths=[4])
     MLPClass.fit(data,labels, initial_weights=MLPClass.initialize_weights_to_zero(2))
-    # Accuracy = MLPClass.score(data,labels)
-    # print("Accuracy = [{:.2f}]".format(Accuracy))
-    # print("Final Weights =",MLPClass.get_weights())
+    weights = MLPClass.get_weights()
+    print(weights)
+    expected = [-1.0608880e-02,
+                -1.0608880e-02, 
+                -1.0608880e-02, 
+                -1.0608880e-02, 
+                -2.1454953e-02, 
+                -8.8177979e-05, 
+                7.8275773e-04, 
+                -3.9435364e-03, 
+                -8.8177979e-05, 
+                7.8275773e-04, 
+                -3.9435364e-03, 
+                -8.8177979e-05, 
+                7.8275773e-04, 
+                -3.9435364e-03, 
+                -8.8177979e-05, 
+                7.8275773e-04, 
+                -3.9435364e-03]
+    allowed_error = .000000001
+    print(abs(weights[0][0][0] - expected[5]) < allowed_error)
+    print(abs(weights[0][1][0] - expected[6]) < allowed_error)
+    print(abs(weights[0][2][0] - expected[7]) < allowed_error)
+    print(abs(weights[1][0][0] - expected[0]) < allowed_error)
+    print(abs(weights[1][-1][0] - expected[4]) < allowed_error)
 
 def part_two():
     data, labels = setup_data("vowel.arff")
@@ -63,17 +85,9 @@ def part_five():
     pass
 
 def main():
-    # mlp = MLPClassifier(hidden_layer_widths=[3,4,5])
-    # weights = mlp.initialize_weights(input_size=3)
-    # print(weights.shape)
-    # print(weights)
-    part_one()
+    debug()
     return
-    # part_one()
-    # part_one()
-    # part_three()
-    # part_four()
-    # part_five()
+
 
 
 if __name__ == '__main__':
