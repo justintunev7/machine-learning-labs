@@ -2,13 +2,13 @@ import arff
 import matplotlib.pyplot as plt
 import numpy as np
 from mlp import MLPClassifier
-from sklearn.linear_model import Perceptron
+from sklearn.neural_network import MLPClassifier as SKMLPClassifier
+from sklearn.model_selection import train_test_split
 import sys
 import math
 
-# def create_weight_matrix(hidden_)
 def setup_data(file):
-    # print("File =",file)
+    print("File =",file)
     mat = arff.Arff(file,label_count=1)
     data = mat.data[:,0:-1]
     labels = mat.data[:,-1].reshape(-1,1)
@@ -30,30 +30,6 @@ def plot_bar(data, labels=None, xlabel="", ylabel="", title=""):
         plt.bar(range(len(data)), data) 
     plt.show()
 
-def scikit_setup_data(file):
-    # print("File =",file)
-    mat = arff.Arff(file,label_count=1)
-    data = mat.data[:,0:-1]
-    labels = mat.data[:,-1]
-    return data, labels
-
-def plot_descision_line(X, y, weights):
-    a = np.empty((0,len(X[0])))
-    b = np.empty((0,len(X[0])))
-    for i in range(len(X)):
-        if y[i][0] == 1: a = np.vstack((a, X[i]))
-        else: b = np.vstack((b, X[i]))
-    plt.scatter(a[:,0], a[:,1], label='1')
-    plt.scatter(b[:,0], b[:,1], label='0')
-
-    slope = -weights[0]/weights[1]
-    x = [-1, 1]
-    plt.plot(x, [x[0]*slope - weights[2], x[1]*slope - weights[2]])
-    plt.xlabel("var 1")
-    plt.ylabel("var 2")
-    plt.title("Instances and Decision Line")
-    plt.show()
-
 def to_csv_file(filename, weights):
     temp_array = []
     for weight in weights:
@@ -72,7 +48,7 @@ def evaluation():
 
 def part_one():
     debug()
-    # evaluation()
+    evaluation()
 
 def print_score_data(mse, accuracy):
     print("MSE",mse)
@@ -111,10 +87,6 @@ def part_two():
     analytics = MLPClass.error_analytics()
     length = range(len(analytics["Training error"]))
     plot_bar(analytics, labels=None, xlabel="Epochs", ylabel="Error/Accuracy", title="Error/Accuracy by Epoch")
-    # t_error, v_error, v_accuracy = MLPClass.error_analytics()
-    # plot_bar(t_error, range(len(t_error)), "Epochs", "Training Error", "Training Error by Epoch")
-    # plot_bar(v_error, range(len(v_error)), "Epochs", "Validation Error", "Validation Error by Epoch")
-    # plot_bar(v_accuracy, range(len(v_accuracy)), "Epochs", "Validation Accuracy", "Validation Accuracy by Epoch")
 
 def plot_number_of_epochs(analytics, label):
     results = {
@@ -122,8 +94,6 @@ def plot_number_of_epochs(analytics, label):
         label: [a[label] for a in analytics]
     }
     plot_bar(results["Number of Epochs"], results[label], label, "Number of Epochs", "Number of Epochs to optimization by " + label)
-
-
 
 def part_three():
     print("\nPART Three")
@@ -136,7 +106,6 @@ def part_three():
     MLPClass = MLPClassifier(lr=lr,shuffle=True, hidden_layer_widths=[hidden_nodes], analytics=True)
     X_train, X_test, y_train, y_test = MLPClass.split_data(data, labels)
     MLPClass = MLPClass.fit(X_train,y_train)
-    # print("WEIGHTS", MLPClass.get_weights())
     accuracy = MLPClass.score(X_test, y_test)
     print("BASELINE ACCURACY",accuracy)
     errors = {"Training error": [], "Validation error": [], "Test error": []}
@@ -188,7 +157,6 @@ def part_four():
     MLPClass = MLPClassifier(lr=lr,shuffle=True, hidden_layer_widths=[hidden_nodes], analytics=True)
     X_train, X_test, y_train, y_test = MLPClass.split_data(data, labels)
     MLPClass = MLPClass.fit(X_train,y_train)
-    # print("WEIGHTS", MLPClass.get_weights())
     accuracy = MLPClass.score(X_test, y_test)
     print("BASELINE ACCURACY",accuracy)
     errors = {"Training error": [], "Validation error": [], "Test error": []}
@@ -222,9 +190,6 @@ def part_four():
         analytics[-1]["Hidden nodes"] = hidden_nodes
         current_accuracy = len(analytics[-1]["Validation accuracy"])
     hidden_node_labels = [a["Hidden nodes"] for a in analytics]
-    # plot_different_learning_rates(analytics)
-    # del analytics[-2]["Learning rate"]
-    # plot_bar(analytics[-2], xlabel="Epochs", ylabel="Error/Accuracy", title="Error/Accuracy by Epoch")
     plot_bar(errors, labels=hidden_node_labels, xlabel="Hidden nodes", ylabel="MSE", title="Error by number of hidden nodes")
     accuracy = MLPClass.score(X_test, y_test)
     print("ACCURACY",accuracy)
@@ -242,12 +207,13 @@ def part_five():
     MLPClass = MLPClassifier(lr=lr,shuffle=True, momentum=momentum, hidden_layer_widths=[hidden_nodes], analytics=True)
     X_train, X_test, y_train, y_test = MLPClass.split_data(data, labels)
     MLPClass = MLPClass.fit(X_train,y_train)
-    # print("WEIGHTS", MLPClass.get_weights())
     accuracy = MLPClass.score(X_test, y_test)
+
     print("BASELINE ACCURACY",accuracy)
     errors = {"Training error": [], "Validation error": [], "Test error": []}
     analytics = []
     analytics.append(MLPClass.error_analytics())
+
     current_errors = MLPClass.error_results(X_test, y_test)
     errors["Training error"].append(current_errors[0])
     errors["Validation error"].append(current_errors[1])
@@ -260,7 +226,7 @@ def part_five():
     while current_num_epochs < bssf_num_epochs or (analytics[-1]["Validation accuracy"][-1] < .7):
         print(analytics[-1]["Validation accuracy"][-1])
         bssf_num_epochs = current_num_epochs
-        momentum /= 2 # increase momentum each time
+        momentum /= 2 # decrease momentum each time
         del MLPClass
         MLPClass = MLPClassifier(lr=lr,shuffle=True, momentum=momentum, hidden_layer_widths=[hidden_nodes], analytics=True)
         X_train, X_test, y_train, y_test = MLPClass.split_data(data, labels)
@@ -277,19 +243,86 @@ def part_five():
         current_num_epochs = len(analytics[-1]["Training error"])
     momentum_labels = [a["Momentum"] for a in analytics]
     plot_number_of_epochs(analytics, "Momentum")
-    # plot_different_learning_rates(analytics)
-    # del analytics[-2]["Learning rate"]
-    # plot_bar(analytics[-2], xlabel="Epochs", ylabel="Error/Accuracy", title="Error/Accuracy by Epoch")
-    # plot_bar(errors, labels=momentum_labels, xlabel="Momentum", ylabel="MSE", title="MSE as a result of momentum multiplier")
     accuracy = MLPClass.score(X_test, y_test)
     print("ACCURACY",accuracy)
 
+def split_data(X, y, test_split=.25):
+        # create test split
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split)
+        return X_train, X_test, y_train, y_test
+
+def part_six_run_models(data, labels):
+    mlp1 = SKMLPClassifier(hidden_layer_sizes=(10,10), 
+                           activation='relu',
+                           learning_rate_init=.01,
+                           momentum=.9,
+                           max_iter=1000,
+                           nesterovs_momentum=False,
+                           early_stopping=False,
+                           alpha=.001)
+    mlp2 = SKMLPClassifier(hidden_layer_sizes=(20,20,20), 
+                           activation='tanh',
+                           learning_rate_init=.1,
+                           momentum=.5,
+                           max_iter=1000,
+                           nesterovs_momentum=True,
+                           early_stopping=True,
+                           alpha=.01)
+    my_mlp = MLPClassifier(hidden_layer_widths=[20], lr=.2, deterministic=20, momentum=.5)
+    X_train, X_test, y_train, y_test = my_mlp.split_data(data, labels)
+    # print(y_train[:,-1])
+    mlp1.fit(X_train,y_train[:,-1])
+    mlp2.fit(X_train,y_train[:,-1])
+    my_mlp.fit(X_train, y_train)
+    print("\nMLP1 SCORE:", mlp1.score(X_test, y_test))
+    print("MLP2 SCORE:", mlp2.score(X_test, y_test))
+    print("MY_MLP SCORE:", my_mlp.score(X_test, y_test, error=False))
+
+def grid_search(X_train, X_test, y_train, y_test):
+    results = []
+    for activation in ['relu', 'tanh', 'logistic']:
+        for lr in [.001, .01, .1]:
+            for hidden_layers in [(10,10), (20, 20), (30)]:
+                for momentum in [.1, .5, .9]:
+                    mlp = SKMLPClassifier(hidden_layer_sizes=hidden_layers,
+                                          activation=activation,
+                                          momentum=momentum,
+                                          early_stopping=False,
+                                          max_iter=1000,
+                                          learning_rate_init=lr)
+                    print("\nHidden layer sizes:", hidden_layers,
+                          "Activation fun:", activation,
+                          "Momentum:", momentum,
+                          "Learning rate", lr)
+                    mlp.fit(X_train, y_train[:,-1])
+                    score = mlp.score(X_test, y_test)
+                    print("Score:", score)
+                    results.append((activation, lr, hidden_layers, momentum, score))
+    return results
+
+def part_six():
+    print("\nPART SIX")
+    data, labels = setup_data("vowel.arff")
+    # remove train/test column
+    data = data[:,1:]
+    part_six_run_models(data, labels)
+
+    data, labels = setup_data("iris.arff")
+    part_six_run_models(data, labels)
+
+    data, labels = setup_data("diabetes.arff")
+    X_train, X_test, y_train, y_test = split_data(data, labels)
+    results = grid_search(X_train, X_test, y_train, y_test)
+    print(max(results, key=lambda r: r[-1] ))
+
 def main():
-    # part_one()
+    print("Starting tests")
+    part_one()
     part_two()
-    # part_three()
-    # part_four()
-    # part_five()
+    part_three()
+    part_four()
+    part_five()
+    part_six()
     return
 
 

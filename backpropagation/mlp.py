@@ -66,7 +66,6 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
 
     # Trains the model based on the 2D input and target arrays.
     # Performs forward steps and backpropagation
-    # TODO: separate stopping criterias (validation set or not)
     def fit(self, X, y, initial_weights=None):
         y = self._one_hot_encode(y)
         self.weights = initial_weights = self.initialize_weights(len(X[0]), len(y[0])) if initial_weights is None else initial_weights
@@ -79,14 +78,13 @@ class MLPClassifier(BaseEstimator,ClassifierMixin):
             bssf = current_solution
             for a in range(self.deterministic):
                 y_hat = []
-                # print("--Epoch {}--".format(a+1))
                 # shuffle the data each epoch
                 X, y = self._shuffle_data(X, y)
                 for i in range(len(X)):
                     results = self.forward(X[i])
                     y_hat.append(results[-1])
                     delta_weights = self.backward(results, y[i])
-                    # if self.debug: self.print_debug_info(X[i], y[i], results) # debug info
+                    if self.debug: self.print_debug_info(X[i], y[i], results) # debug info
                     self.weights = np.add(self.weights, delta_weights)
                 self.validation_error.append(self._validation_error())
                 if self.analytics: self.validation_accuracy.append(self._validation_accuracy())
