@@ -47,27 +47,16 @@ class Node():
         for child in self.children:
             child.print_tree(pre + "\t")
 
-# NOTE: The only methods you are required to have are:
-#   * predict
-#   * fit
-#   * score
 class DTClassifier(BaseEstimator, ClassifierMixin):
+    # Counts = number of types/classes for each attribute
     def __init__(self, counts=None):
         self.counts = counts
-        print("COUNTS: ", counts)
         self.weights = None
         self.root = Node()
         self.visited = []
-        """ Initialize class with chosen hyperparameters.
-
-        Args:
-            counts = how many types for each attribute
-        Example:
-            DT  = DTClassifier()
-        """
     
     def init_weights(self):
-        if self.weights: return [w * 0 for w in self.weights] # map(lambda w: w * 0, self.weights)
+        if self.weights: return [w * 0 for w in self.weights]
         self.weights = []
         for i in range(len(self.counts) - 1):
             self.weights.append(np.zeros((self.counts[i], self.counts[-1])))
@@ -107,11 +96,14 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
             data.append(combined[combined[:,feature] == i])
         return data
 
+    """ Get the feature with the minimum entropy (max information gain)
+    Returns:
+        min_entropy_index: the index to the feature with the minimum entropy
+    """
     def get_min_entropy(self, targets, visited=[]):
         min_entropy = math.inf
         min_entropy_index = -1
         for i, matrix in enumerate(self.weights):
-            # if i in visited: continue
             temp_entropy = self.entropy(targets, matrix)
             if temp_entropy < min_entropy: 
                 min_entropy = temp_entropy
@@ -119,13 +111,13 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
         return min_entropy_index
 
 
-        """ Fit the data; Make the Desicion tree
-        Args:
-            X (array-like): A 2D numpy array with the training data, excluding targets
-            y (array-like): A 2D numpy array with the training targets
-        Returns:
-            self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
-        """
+    """ Fit the data; Make the Desicion tree
+    Args:
+        X (array-like): A 2D numpy array with the training data, excluding targets
+        y (array-like): A 2D numpy array with the training targets
+    Returns:
+        self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
+    """
     def fit(self, X, y, node=None, visited=[]):
         print("IN FIT", visited)
         if node is None: node = self.root
@@ -139,6 +131,8 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
         
         min_entropy_index = self.get_min_entropy(targets, visited)
 
+        # if the min_entropy has already been used in the tree,
+        # then there is no new information to gain
         if min_entropy_index in visited: return
         
         data = self.split_data(X, y, min_entropy_index)
@@ -154,6 +148,13 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
     def predict_with_tree(self, instance):
         self.root.predict(instance)
 
+    """ Predict all classes for a dataset X
+    Args:
+        X (array-like): A 2D numpy array with the training data, excluding targets
+    Returns:
+        array, shape (n_samples,)
+            Predicted target values per element in X.
+    """
     def predict(self, X):
         y_hat = []
         for i, instance in enumerate(X):
@@ -161,29 +162,18 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
             y_hat.append(self.root.predict(instance))
         print(y_hat)
         return y_hat
-        """ Predict all classes for a dataset X
 
-        Args:
-            X (array-like): A 2D numpy array with the training data, excluding targets
-
-        Returns:
-            array, shape (n_samples,)
-                Predicted target values per element in X.
-        """
-        pass
-
+    """ Return accuracy of model on a given dataset. Must implement own score function.
+    Args:
+        X (array-like): A 2D numpy array with data, excluding targets
+        y (array-li    def _shuffle_data(self, X, y):
+    """
     def score(self, X, y):
         y_hat = self.predict(X)
         sum = 0
         for i, result in enumerate(y):
             sum += 0 if result == y_hat[i] else 1
         return 1 - sum / len(y_hat)
-        """ Return accuracy of model on a given dataset. Must implement own score function.
-
-        Args:
-            X (array-like): A 2D numpy array with data, excluding targets
-            y (array-li    def _shuffle_data(self, X, y):
-        """
 
     def get_root(self):
         return self.root
