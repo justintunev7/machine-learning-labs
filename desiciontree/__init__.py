@@ -3,12 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from desiciontree import DTClassifier
 from sklearn.model_selection import train_test_split, KFold
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
 import sys
 import copy
 import math
 
-def sklearn_cross_validation_tests(data, labels, counts, max_depth=None, min_samples_split=2):
+def sklearn_cross_validation_tests(data, labels, counts, max_depth=None, min_samples_split=2, export_graph=False):
     accuracies = []
     for train_index, test_index in cross_validation(data, n_splits=10):
         X_train, X_test = data[train_index], data[test_index]
@@ -16,10 +16,15 @@ def sklearn_cross_validation_tests(data, labels, counts, max_depth=None, min_sam
         DTClass = DecisionTreeClassifier(max_depth=max_depth, min_samples_split=min_samples_split)
         DTClass.fit(X_train,y_train)
         accuracies.append(DTClass.score(X_test, y_test))
-        print(DTClass.feature_importances_)
-    # if display_tree: DTClass.display_tree()
+    if export_graph: print(export_graphviz(DTClass))
     del DTClass
     return accuracies
+
+def part_six():
+    print("PART SIX")
+    data, labels, counts = setup_data("./labor.arff", clean=True)
+    accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=4, min_samples_split=4, export_graph=True)
+    print("Average Accuracy WEATHER (sklearn) max_depth=", 4, "and min_samples_split=", 4, ":", sum(accuracies) / len(accuracies))
 
 def part_five():
     print("PART FIVE (sklearn)")
@@ -27,22 +32,28 @@ def part_five():
     accuracies = sklearn_cross_validation_tests(data, labels, counts)
     print("Average Accuracy CARS (sklearn) max_depth=", None, "and min_samples_split=", 2, ":", sum(accuracies) / len(accuracies))
     for i in range(5):
-        accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=i+2, min_samples_split=i+2)
-        # print("ACCURACIES CARS (sklearn):", accuracies)
-        print("Average Accuracy CARS (sklearn) max_depth=", i+2, "and min_samples_split=", i+2, ":", sum(accuracies) / len(accuracies))
+        accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=i+2, min_samples_split=6-i)
+        print("Average Accuracy CARS (sklearn) max_depth=", i+2, "and min_samples_split=", 6-i, ":", sum(accuracies) / len(accuracies))
 
     data, labels, counts = setup_data("./voting.arff", clean=True)
     accuracies = sklearn_cross_validation_tests(data, labels, counts)
     print("Average Accuracy VOTING (sklearn) max_depth=", None, "and min_samples_split=", 2, ":", sum(accuracies) / len(accuracies))
     for i in range(5):
-        accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=i+2, min_samples_split=i+2)
-        # print("ACCURACIES CARS (sklearn):", accuracies)
-        print("Average Accuracy VOTING (sklearn) max_depth=", i+2, "and min_samples_split=", i+2, ":", sum(accuracies) / len(accuracies))
+        accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=i+2, min_samples_split=6-i)
+        print("Average Accuracy VOTING (sklearn) max_depth=", i+2, "and min_samples_split=", 6-i, ":", sum(accuracies) / len(accuracies))
+
+    data, labels, counts = setup_data("./labor.arff", clean=True)
+    accuracies = sklearn_cross_validation_tests(data, labels, counts)
+    print("Average Accuracy WEATHER (sklearn) max_depth=", None, "and min_samples_split=", 2, ":", sum(accuracies) / len(accuracies))
+    for i in range(5):
+        accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=i+2, min_samples_split=6-i)
+        print("Average Accuracy WEATHER (sklearn) max_depth=", i+2, "and min_samples_split=", 6-i, ":", sum(accuracies) / len(accuracies))
 
 
-def setup_data(file, clean=False):
+
+def setup_data(file, clean=False, label_count=1):
     print("\nFile =",file)
-    mat = Arff(file,label_count=1)
+    mat = Arff(file,label_count=label_count)
     counts = []
     for i in range(mat.data.shape[1]):
         counts += [mat.unique_value_count(i)]
@@ -139,7 +150,7 @@ def debug():
     data = mat.data[:,0:-1]
     labels = mat.data[:,-1]
     DTClass = DTClassifier(counts)
-    DTClass.fit(data,labels).get_root().print_tree()
+    DTClass.fit(data,labels).display_tree()
     mat2 = Arff("./all_lenses.arff", label_count=1)
     data2 = mat2.data[:,0:-1]
     labels2 = mat2.data[:,-1]
@@ -153,13 +164,12 @@ def debug():
 
 def main():
     print("Starting tests")
-    # debug()
-    # part_one()
-    # part_two()
-    # part_three()
-    # part_four()
+    debug()
+    part_one()
+    part_two()
+    part_three()
     part_five()
-    # part_six()
+    part_six()
     return
 
 
