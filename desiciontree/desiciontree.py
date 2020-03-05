@@ -4,17 +4,20 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 class Node():
-    def __init__(self, feature=None, value=None, data=[]):
+    def __init__(self, feature=None, value=None, majority_class=None):
         self.feature = feature
         self.value = value
         self.children = []
-        print(data)
-        self.data = data
+        # print(data)
+        self.majority_class = majority_class
+        # self.data = data
 
     # feature is index of feature, classes is list of class indices for feature
     def split(self, feature, classes, data):
+        print("SPLIT TREE", feature)
         for i in range(classes):
-            self.children.append(Node(int(feature), int(i), data[i]))
+            majority_class = self.majority(data[i]) if len(data[i]) > 0 else self.majority_class
+            self.children.append(Node(int(feature), int(i), int(majority_class)))
         
     def get_feature_value(self):
         return self.feature, self.value
@@ -22,27 +25,25 @@ class Node():
     def get_children(self):
         return self.children
     
-    def get_data(self):
-        return self.data
+    def get_majority_class(self):
+        return self.majority_class
     
-    def output(self):
-        a = list(self.data[:,-1])
-        print(a)
+    def majority(self, data):
+        a = list(data[:,-1])
+        # print(a)
         return max(map(lambda val: (a.count(val), val), set(a)))[-1]
     
     def predict(self, instance):
         # print(len(self.children), len(self.data))
         if len(self.children) == 0:
-            output = self.output()
-            print(output)
-            return output
+            return self.majority_class
         child_feature, child_val = self.children[0].get_feature_value()
         return self.children[int(instance[child_feature])].predict(instance)
     
     def print_tree(self, pre=""):
         # print(pre, self.feature_class)
         for child in self.children:
-            print(pre, child.get_feature_value(), "\n", pre, child.get_data(), "\n\n")
+            print(pre, child.get_feature_value(), child.get_majority_class(), "\n")
         for child in self.children:
             child.print_tree(pre + "\t")
 
@@ -103,7 +104,6 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
         data = []
         combined = np.column_stack((X, y))
         for i in range(self.counts[feature]):
-            print("SPLITTING:",i)
             data.append(combined[combined[:,feature] == i])
         return data
 
@@ -111,13 +111,21 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
         min_entropy = math.inf
         min_entropy_index = -1
         for i, matrix in enumerate(self.weights):
-            if i in visited: continue
+            # if i in visited: continue
             temp_entropy = self.entropy(targets, matrix)
             if temp_entropy < min_entropy: 
                 min_entropy = temp_entropy
                 min_entropy_index = i
         return min_entropy_index
 
+
+        """ Fit the data; Make the Desicion tree
+        Args:
+            X (array-like): A 2D numpy array with the training data, excluding targets
+            y (array-like): A 2D numpy array with the training targets
+        Returns:
+            self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
+        """
     def fit(self, X, y, node=None, visited=[]):
         print("IN FIT", visited)
         if node is None: node = self.root
@@ -129,38 +137,18 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
                 self.weights[j][int(feature), int(y[i])] += 1
             targets[int(y[i])] += 1
         
-        min_entropy_index = self.get_min_entropy(targets, targets)
+        min_entropy_index = self.get_min_entropy(targets, visited)
 
+        if min_entropy_index in visited: return
         
         data = self.split_data(X, y, min_entropy_index)
         node.split(min_entropy_index, self.counts[min_entropy_index], data)
 
-        # print("\n\nTREE")
-        # self.root.print_tree()
 
+        # data is X separated by classes from chosen feature
         for i, matrix in enumerate(data):
-            # self.fit(matrix[:,:-1], matrix[:,-1], node.get_children()[i], visited + [i])
-            if i in visited or len(matrix) == 0: continue
             remaining = list(range(len(matrix[0][:-1])))
-            # print("REMAINING FEATURES: ", remaining, i)
-            # del remaining[i]
-            self.fit(matrix[:,remaining], matrix[:,-1], node.get_children()[i], visited + [i])
-        
-            # feature_entropy[i] = self.entropy(targets, matrix)
-        
-
-
-        """ Fit the data; Make the Desicion tree
-
-        Args:
-            X (array-like): A 2D numpy array with the training data, excluding targets
-            y (array-like): A 2D numpy array with the training targets
-
-        Returns:
-            self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
-
-        """
-
+            self.fit(matrix[:,remaining], matrix[:,-1], node.get_children()[i], visited + [min_entropy_index])        
         return self
     
     def predict_with_tree(self, instance):

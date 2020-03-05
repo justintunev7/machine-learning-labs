@@ -21,7 +21,7 @@ def debug():
     labels = mat.data[:,-1]
     DTClass = DTClassifier(counts)
     DTClass.fit(data,labels).get_root().print_tree()
-    mat2 = Arff("./lenses.arff", label_count=1)
+    mat2 = Arff("./all_lenses.arff", label_count=1)
     data2 = mat2.data[:,0:-1]
     labels2 = mat2.data[:,-1]
     pred = DTClass.predict(data2)
