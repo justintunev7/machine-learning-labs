@@ -8,13 +8,10 @@ class Node():
         self.feature = feature
         self.value = value
         self.children = []
-        # print(data)
         self.majority_class = majority_class
-        # self.data = data
 
     # feature is index of feature, classes is list of class indices for feature
     def split(self, feature, classes, data):
-        print("SPLIT TREE", feature)
         for i in range(classes):
             majority_class = self.majority(data[i]) if len(data[i]) > 0 else self.majority_class
             self.children.append(Node(int(feature), int(i), int(majority_class)))
@@ -30,20 +27,17 @@ class Node():
     
     def majority(self, data):
         a = list(data[:,-1])
-        # print(a)
         return max(map(lambda val: (a.count(val), val), set(a)))[-1]
     
     def predict(self, instance):
-        # print(len(self.children), len(self.data))
         if len(self.children) == 0:
             return self.majority_class
         child_feature, child_val = self.children[0].get_feature_value()
         return self.children[int(instance[child_feature])].predict(instance)
     
     def print_tree(self, pre=""):
-        # print(pre, self.feature_class)
         for child in self.children:
-            print(pre, child.get_feature_value(), child.get_majority_class(), "\n")
+            print(pre, child.get_feature_value(), child.get_majority_class())
         for child in self.children:
             child.print_tree(pre + "\t")
 
@@ -119,13 +113,13 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
         self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
     """
     def fit(self, X, y, node=None, visited=[]):
-        print("IN FIT", visited)
         if node is None: node = self.root
         self.weights = self.init_weights()
         targets = np.zeros((self.counts[-1]))
         # get feature-output counts
         for i, instance in enumerate(X):
             for j, feature in enumerate(instance):
+                # if math.isnan(feature): print("ERRROR")
                 self.weights[j][int(feature), int(y[i])] += 1
             targets[int(y[i])] += 1
         
@@ -141,6 +135,7 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
 
         # data is X separated by classes from chosen feature
         for i, matrix in enumerate(data):
+            if len(matrix) == 0 or len(matrix[0]) == 0: continue
             remaining = list(range(len(matrix[0][:-1])))
             self.fit(matrix[:,remaining], matrix[:,-1], node.get_children()[i], visited + [min_entropy_index])        
         return self
@@ -158,9 +153,7 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         y_hat = []
         for i, instance in enumerate(X):
-            # print("\n\n", i)
             y_hat.append(self.root.predict(instance))
-        print(y_hat)
         return y_hat
 
     """ Return accuracy of model on a given dataset. Must implement own score function.
@@ -174,6 +167,6 @@ class DTClassifier(BaseEstimator, ClassifierMixin):
         for i, result in enumerate(y):
             sum += 0 if result == y_hat[i] else 1
         return 1 - sum / len(y_hat)
-
-    def get_root(self):
-        return self.root
+    
+    def display_tree(self):
+        self.root.print_tree()
