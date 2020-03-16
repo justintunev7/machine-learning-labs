@@ -1,0 +1,28 @@
+digraph Tree {
+node [shape=box] ;
+0 [label="pension <= 2.5\ngini = 0.473\nsamples = 52\nvalue = [20, 32]"] ;
+1 [label="wage-increase-first-year <= 4.25\n0.403\n25\n[18, 7]"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label="shift-differential <= 4.0\n0.245\n21\n[18, 3]"] ;
+1 -> 2 ;
+3 [label="wage-increase-third-year <= 3.55\n0.105\n18\n[17, 1]"] ;
+2 -> 3 ;
+4 [label="0.0\n17\n[17, 0]"] ;
+3 -> 4 ;
+5 [label="0.0\n1\n[0, 1]"] ;
+3 -> 5 ;
+6 [label="0.444\n3\n[1, 2]"] ;
+2 -> 6 ;
+7 [label="0.0\n4\n[0, 4]"] ;
+1 -> 7 ;
+8 [label="contribution-to-health-plan <= 1.5\n0.137\n27\n[2, 25]"] ;
+0 -> 8 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+9 [label="shift-differential <= 1.0\n0.408\n7\n[2, 5]"] ;
+8 -> 9 ;
+10 [label="0.0\n4\n[0, 4]"] ;
+9 -> 10 ;
+11 [label="0.444\n3\n[2, 1]"] ;
+9 -> 11 ;
+12 [label="0.0\n20\n[0, 20]"] ;
+8 -> 12 ;
+}

@@ -16,7 +16,26 @@ def sklearn_cross_validation_tests(data, labels, counts, max_depth=None, min_sam
         DTClass = DecisionTreeClassifier(max_depth=max_depth, min_samples_split=min_samples_split)
         DTClass.fit(X_train,y_train)
         accuracies.append(DTClass.score(X_test, y_test))
-    if export_graph: print(export_graphviz(DTClass))
+    if export_graph:
+        feature_names = [
+            "duration",
+            "wage-increase-first-year",
+            "wage-increase-second-year",
+            "wage-increase-third-year",
+            "cost-of-living-adjustment",
+            "working-hours",
+            "pension",
+            "standby-pay",
+            "shift-differential",
+            "education-allowance",
+            "statutory-holidays",
+            "vacation",
+            "longterm-disability-assistance'",
+            "contribution-to-dental-plan",
+            "bereavement-assistance",
+            "contribution-to-health-plan"
+        ]
+        export_graphviz(DTClass, label="root", out_file='tree.dot', feature_names=feature_names)
     del DTClass
     return accuracies
 
@@ -24,7 +43,7 @@ def part_six():
     print("PART SIX")
     data, labels, counts = setup_data("./labor.arff", clean=True)
     accuracies = sklearn_cross_validation_tests(data, labels, counts, max_depth=4, min_samples_split=4, export_graph=True)
-    print("Average Accuracy WEATHER (sklearn) max_depth=", 4, "and min_samples_split=", 4, ":", sum(accuracies) / len(accuracies))
+    print("Average Accuracy LABOR (sklearn) max_depth=", 4, "and min_samples_split=", 4, ":", sum(accuracies) / len(accuracies))
 
 def part_five():
     print("PART FIVE (sklearn)")
@@ -84,15 +103,17 @@ def cross_validation(X, n_splits=10):
 
 def cross_validation_tests(data, labels, counts, display_tree=False):
     accuracies = []
+    train_accuracies = []
     for train_index, test_index in cross_validation(data, n_splits=10):
         X_train, X_test = data[train_index], data[test_index]
         y_train, y_test = labels[train_index], labels[test_index]
         DTClass = DTClassifier(counts)
         DTClass.fit(X_train,y_train)
         accuracies.append(DTClass.score(X_test, y_test))
+        train_accuracies.append(DTClass.score(X_train, y_train))
     if display_tree: DTClass.display_tree()
     del DTClass
-    return accuracies
+    return accuracies, train_accuracies
 
 def part_three():
     part_two(display_tree=True)
@@ -100,9 +121,11 @@ def part_three():
 def part_two(display_tree=False):
     print("\nPART THREE:") if display_tree else print("\nPART TWO:")
     data, labels, counts = setup_data("./cars.arff")
-    accuracies = cross_validation_tests(data, labels, counts, display_tree=display_tree)
+    accuracies, train_accuracies = cross_validation_tests(data, labels, counts, display_tree=display_tree)
     print("ACCURACIES CARS:", accuracies)
     print("Average Accuracy CARS:", sum(accuracies) / len(accuracies))
+
+    print("TRAIN ACCURACIES", train_accuracies) 
     # for train_index, test_index in cross_validation(data, n_splits=10):
     #     X_train, X_test = data[train_index], data[test_index]
     #     y_train, y_test = labels[train_index], labels[test_index]
@@ -115,9 +138,10 @@ def part_two(display_tree=False):
 
     accuracies = []
     data, labels, counts = setup_data("./voting.arff", clean=True)
-    accuracies = cross_validation_tests(data, labels, counts, display_tree=display_tree)
-    print("ACCURACIES CARS:", accuracies)
+    accuracies, train_accuracies = cross_validation_tests(data, labels, counts, display_tree=display_tree)
+    print("ACCURACIES VOTING:", accuracies)
     print("Average Accuracy VOTING:", sum(accuracies) / len(accuracies))
+    print("TRAIN ACCURACIES", train_accuracies) 
     # for i in range(5):
     #     print(i)
     #     X_train, X_test, y_train, y_test = split_data(data, labels)
@@ -132,13 +156,32 @@ def part_one():
     accuracies = []
     data, labels, counts = setup_data("./lenses.arff")
     for i in range(5):
-        print(i)
         X_train, X_test, y_train, y_test = split_data(data, labels)
         DTClass = DTClassifier(counts)
         DTClass.fit(X_train,y_train)
         accuracies.append(DTClass.score(X_test, y_test))
         del DTClass
     print("Average Accuracy:", sum(accuracies) / len(accuracies))
+
+    print("\nZoo results:")
+    mat = Arff("./zoo.arff",label_count=1)
+    counts = [] ## this is so you know how many types for each column
+
+    for i in range(mat.data.shape[1]):
+        counts += [mat.unique_value_count(i)]
+    data = mat.data[:,0:-1]
+    labels = mat.data[:,-1]
+    DTClass = DTClassifier(counts)
+    DTClass.fit(data,labels).display_tree()
+    mat2 = Arff("./all_zoo.arff", label_count=1)
+    data2 = mat2.data[:,0:-1]
+    labels2 = mat2.data[:,-1]
+    pred = DTClass.predict(data2)
+    Acc = DTClass.score(data2,labels2)
+
+    # write to CSV file
+    np.savetxt("pred_zoo.csv",pred,delimiter=",")
+    print("Accuracy = [{:.2f}]".format(Acc))
 
 
 def debug():
@@ -155,7 +198,7 @@ def debug():
     data2 = mat2.data[:,0:-1]
     labels2 = mat2.data[:,-1]
     pred = DTClass.predict(data2)
-    print("FINISHED!")
+    print("DEBUG FINISHED")
     Acc = DTClass.score(data2,labels2)
 
     # write to CSV file
@@ -164,11 +207,11 @@ def debug():
 
 def main():
     print("Starting tests")
-    debug()
-    part_one()
-    part_two()
-    part_three()
-    part_five()
+    # debug()
+    # part_one()
+    # part_two()
+    # part_three()
+    # part_five()
     part_six()
     return
 
