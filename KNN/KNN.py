@@ -30,37 +30,12 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
         self.labels = labels.astype(int)
         self.classes = max(self.labels) + 1
         return self
-
-    def getDistance(self, row1, row2, i):
-        return (np.linalg.norm(row1-row2, axis=-1), self.labels[i])
-        # return (np.sqrt(np.sum(np.power(row1-row2, 2))), self.labels[i])
     
     # Gets the sorted distances between the row and all other datapoints in self.data
     # returns: sorted array of tuples of (distance, index, label)
     def getDistances(self, row):
         distances = np.column_stack((np.linalg.norm(self.data-row, axis=-1), self.labels))
-        # distances = np.column_stack((np.sqrt(np.sum(np.power(self.data-row, 2), axis=-1)), self.labels))
-        # print(distances)
-        # for i in range(len(self.data)):
-        #     distances[i] = self.getDistance(row, self.data[i], i)
         return distances[distances[:,0].argpartition(kth=self.k)][0:self.k]
-
-    # def euclidean_distance(self, vector1, vector2, i):
-    #     return (np.sqrt(np.sum(np.power(vector1-vector2, 2))), i, self.labels[i])
-
-    # def get_neighbours(self, X_train, X_test_instance):
-    #     distances = []
-    #     neighbors = []
-    #     for i in range(0, X_train.shape[0]):
-    #         dist = self.euclidean_distance(X_train[i], X_test_instance)
-    #         distances.append((i, dist))
-    #     # distances.sort
-    #     distances.sort(key=operator.itemgetter(1))
-    #     np.sort(distances, axis=1, order=)
-    #     for x in range(self.k):
-    #         #print distances[x]
-    #         neighbors.append(distances[x][0])
-    #     return neighbors
 
     def predict_label(self, neighbors):
         if self.use_distance_weighting:
@@ -71,10 +46,7 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
             for i, neighbor in enumerate(neighbors):
                 if neighbor[0] == 0.0: return int(neighbor[-1])
                 if neighbor[-1] not in labels: print(labels)
-                labels[int(neighbor[-1])] += (1 / (neighbor[0]))     
-            # print("\n")
-            # print(neighbors)
-            # print(labels)      
+                labels[int(neighbor[-1])] += (1 / (neighbor[0]))         
             return max(labels,key=labels.get)
         else:
             # get max counted class
@@ -87,8 +59,6 @@ class KNNClassifier(BaseEstimator,ClassifierMixin):
             # if i % 50 == 0:
             #     print(i)
             neighbors = self.getDistances(row)
-            # get k nearest neighbors
-            # neighbors = np.array(distances, dtype=int)
             y_hat.append(self.predict_label(neighbors))
         return y_hat
 
