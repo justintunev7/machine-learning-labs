@@ -4,6 +4,7 @@ import numpy as np
 from KNN import KNNClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.decomposition import PCA
 import sys
 import copy
 import math
@@ -58,17 +59,56 @@ def split_data(X, y, test_split=.25):
         X, y, test_size=test_split)
     return X_train, X_test, y_train, y_test
 
+def wrapper(data, labels, n_components):
+    current_data = np.empty((len(data), 0))
+    feat_remaining = []
+    for feat in range(len(data[0])):
+        feat_remaining.append(feat)
+    for i in range(n_components):
+        best_accuracy = 0
+        bssf = None
+        for feat in feat_remaining:
+            sub_data = np.column_stack((current_data, data[:,feat]))
+            X_train, X_test, y_train, y_test = split_data(sub_data, labels, test_split=.10)
+            KNN = KNeighborsClassifier(n_neighbors=5, p=1)
+            KNN.fit(X_train, y_train)
+            accuracy = KNN.score(X_test, y_test)
+            if accuracy > best_accuracy:
+                bssf = feat
+                best_accuracy = accuracy
+        current_data = np.column_stack((current_data, data[:,bssf]))
+        feat_remaining.remove(bssf)
+    return current_data
+
 def seven():
-    train_data, train_labels = setup_data("magic_telescope_train.arff")
-    test_data, test_labels = setup_data("magic_telescope_test.arff")
-    # normalize
-    norm_train_data = normalize(train_data)
-    norm_test_data = normalize(test_data)
-    KNN = KNeighborsClassifier(n_neighbors=3, p=1)
-    KNN.fit(norm_train_data, train_labels)
-    accuracy = KNN.score(norm_test_data, test_labels)
-    print("k:", k, "p: 1")
-    print("SKLearn magic telescope ACCURACY:", accuracy)
+    data, labels = setup_data("voting_data.arff")
+    X_train, X_test, y_train, y_test = split_data(data, labels, test_split=.10)
+    norm_train_data = normalize(X_train)
+    norm_test_data = normalize(X_test)
+    KNN = KNeighborsClassifier(n_neighbors=5, p=1)
+    KNN.fit(norm_train_data, y_train)
+    accuracy = KNN.score(norm_test_data, y_test)
+    print("SKLearn voting ACCURACY (all features):", accuracy)
+    
+    
+    pca = PCA(n_components=6)
+    pca.fit(data)
+    data2 = pca.transform(data)
+    X_train, X_test, y_train, y_test = split_data(data2, labels, test_split=.10)
+    norm_train_data = normalize(X_train)
+    norm_test_data = normalize(X_test)
+    KNN = KNeighborsClassifier(n_neighbors=5, p=1)
+    KNN.fit(norm_train_data, y_train)
+    accuracy = KNN.score(norm_test_data, y_test)
+    print("SKLearn voting ACCURACY (PCA 10 features):", accuracy)
+
+    data3 = wrapper(data, labels, 6)
+    X_train, X_test, y_train, y_test = split_data(data3, labels, test_split=.10)
+    KNN = KNeighborsClassifier(n_neighbors=5, p=1)
+    KNN.fit(X_train, y_train)
+    accuracy = KNN.score(X_test, y_test)
+    print("SKLearn voting ACCURACY (wrapper 10 features):", accuracy)
+
 
 def six():
     train_data, train_labels = setup_data("magic_telescope_train.arff")
@@ -269,7 +309,8 @@ def main():
     # three()
     # four()
     # five()
-    six()
+    # six()
+    seven()
     return
 
 
