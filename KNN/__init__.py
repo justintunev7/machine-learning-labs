@@ -81,6 +81,7 @@ def wrapper(data, labels, n_components):
     return current_data
 
 def seven():
+    print("PART SEVEN")
     data, labels = setup_data("voting_data.arff")
     X_train, X_test, y_train, y_test = split_data(data, labels, test_split=.10)
     norm_train_data = normalize(X_train)
@@ -111,6 +112,7 @@ def seven():
 
 
 def six():
+    print("PART SIX")
     train_data, train_labels = setup_data("magic_telescope_train.arff")
     test_data, test_labels = setup_data("magic_telescope_test.arff")
     # normalize
@@ -155,6 +157,7 @@ def six():
         print("SKLearn housing ACCURACY:", accuracy)
 
 def five():
+    print("PART FIVE")
     data, labels = setup_data("credit_approval.arff")
     X_train, X_test, y_train, y_test = split_data(data, labels, test_split=.20)
     norm_train_data = normalize(X_train)
@@ -171,6 +174,7 @@ def five():
 
 
 def four():
+    print("PART FOUR")
     # house_price
     train_data, train_labels = setup_data("house_price_train.arff")
     test_data, test_labels = setup_data("house_price_test.arff")
@@ -195,6 +199,7 @@ def four():
 
 
 def three():
+    print("PART THREE")
     train_data, train_labels = setup_data("house_price_train.arff")
     test_data, test_labels = setup_data("house_price_test.arff")
     # normalize
@@ -216,6 +221,7 @@ def three():
 
 
 def two():
+    print("PART TWO")
     train_data, train_labels = setup_data("magic_telescope_train.arff")
     test_data, test_labels = setup_data("magic_telescope_test.arff")
     # # without normalizing
@@ -265,6 +271,7 @@ def try_k(norm_train_data, norm_test_data, train_labels, test_labels, reg=False,
 
 
 def one():
+    print("PART ONE")
     train_data, train_labels = setup_data("diabetes.arff")
     test_data, test_labels = setup_data("diabetes_test.arff")
     KNN = KNNClassifier(labeltype='classification',
@@ -278,6 +285,7 @@ def one():
 
 
 def debug():
+    print("DEBUG")
     train_data, train_labels = setup_data("seismic-bumps_train.arff")
     test_data, test_labels = setup_data("seismic-bumps_test.arff")
     KNN = KNNClassifier(labeltype='classification',
@@ -297,19 +305,18 @@ def debug():
     error, accuracy = KNN.score(test_data, test_labels)
     print("ERROR:", error)
     print("ACCURACY:", accuracy)
-    # print("PREDICTION",pred)
     np.savetxt("seismic-bump-prediction.csv", pred, delimiter=',', fmt="%i")
 
 
 def main():
     print("Starting tests")
-    # debug()
-    # one()
-    # two()
-    # three()
-    # four()
-    # five()
-    # six()
+    debug()
+    one()
+    two()
+    three()
+    four()
+    five()
+    six()
     seven()
     return
 

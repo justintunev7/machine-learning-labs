@@ -9,26 +9,18 @@ class KNNClassifier(BaseEstimator, ClassifierMixin):
         """
         Args:
             columntype for each column tells you if continues[real] or if nominal.
-            weight_type: inverse_distance voting or if non distance weighting. Options = ["no_weight","inverse_distance"]
+            use_distance_weighting: use inverse_distance voting if true
+            regression: use regression if true
         """
         self.columntype = columntype
         self.use_distance_weighting = use_distance_weighting
-        self.weight_type = weight_type
         self.k = k
         self.regression = regression
 
     def fit(self, data, labels, hoem=False):
-        """ Fit the data; run the algorithm (for this lab really just saves the data :D)
-        Args:
-            X (array-like): A 2D numpy array with the training data, excluding targets
-            y (array-like): A 2D numpy array with the training targets
-        Returns:
-            self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
-        """
         self.data = np.array(data)
 
         if hoem:
-
             # for each feature, add range to self.feature_range
             self.feature_range = []
             for i in range(len(self.data[0])):
@@ -45,7 +37,6 @@ class KNNClassifier(BaseEstimator, ClassifierMixin):
             return self.hoem_metric(row)
         distances = np.column_stack(
             (np.linalg.norm(self.data-row, axis=-1), self.labels))
-        # distances = np.column_stack(((np.sqrt(np.sum(np.power(self.data-row, 2), axis=-1))), self.labels))
         return distances[distances[:, 0].argpartition(kth=self.k)][0:self.k]
 
     def hoem_metric(self, row):
@@ -60,14 +51,11 @@ class KNNClassifier(BaseEstimator, ClassifierMixin):
 
     def hoem_d(self, x, y, attribute):
         if math.isnan(x) or math.isnan(y):
-            # print("missing")
             return 1
         if self.columntype[attribute] == "nominal":
-            # print("nominal")
             if x == y:
                 return 0
             return 1
-        # print("continuous")
         return abs(x-y)/(self.feature_range[attribute])
 
     # Computes regression labels
@@ -112,52 +100,29 @@ class KNNClassifier(BaseEstimator, ClassifierMixin):
             counts = np.bincount(neighbors.astype(int)[:, -1])
             return np.argmax(counts)
 
+    # predicts the labels of the data X
     def predict(self, X):
         y_hat = []
         for i, row in enumerate(X):
-            # if i % 50 == 0:
-            #     print(i)
             neighbors = self.getDistances(row)
-            # print(neighbors)
             y_hat.append(self.predict_label(neighbors))
-        # print(y_hat)
         return y_hat
-
-        """ Predict all classes for a dataset X
-        Args:
-            X (array-like): A 2D numpy array with the training data, excluding targets
-        Returns:
-            array, shape (n_samples,)
-                Predicted target values per element in X.
-        """
 
     # returns the mean squared error on the data set
     def mse(self, y_hat, y_truth):
-        # print(y_hat)
-        # print(y_truth)
-        # print(y_hat - y_truth)
         return np.square(y_hat - y_truth).mean(axis=None)
 
     # Accuracy based on percent correct
     def accuracy(self, y_hat, y_truth):
-        # print(y_hat, y_truth)
         sum = 0
         for i, result in enumerate(y_truth):
             sum += 0 if result == y_hat[i] else 1
         return 1 - sum / len(y_hat)
 
-    # Returns the Mean score given input data and labels
+    # Returns the MSE and accuracy given input data and labels
     def score(self, X, y):
         y_hat = self.predict(X)
         error = self.mse(y_hat, y)
         accuracy = self.accuracy(y_hat, y)
         return error, accuracy
 
-        """ Return accuracy of model on a given dataset. Must implement own score function.
-        Args:
-                X (array-like): A 2D numpy array with data, excluding targets
-                y (array-like): A 2D numpy array with targets
-        Returns:
-                score : float
-                        Mean accuracy of self.predict(X) wrt. y.
-        """
