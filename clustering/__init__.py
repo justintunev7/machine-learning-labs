@@ -73,7 +73,7 @@ def kmeans(norm_data, k=5, debug=False, output_file="debug_kmeans.txt"):
 def hac(norm_data, link_type='single', output_file="debug_hac_single.txt"):
     HAC_single = HACClustering(k=5,link_type=link_type)
     HAC_single.fit(norm_data)
-    # HAC_single.save_clusters(output_file)
+    HAC_single.save_clusters(output_file)
 
 def debug():
     data = setup_data('abalone.arff')
