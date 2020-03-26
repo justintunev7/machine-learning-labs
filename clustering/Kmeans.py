@@ -13,6 +13,7 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         """
         self.k = k
         self.debug = debug
+        self.sse = []
     
     def init_centroids(self, X):
         centroids = []
@@ -21,8 +22,8 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         else:
             selected = set(())
             for i in range(self.k):
-                rand_index = randint(0, len(X))
-                while rand_index in selected: rand_index = randint(0, len(X))
+                rand_index = randint(0, len(X) - 1)
+                while rand_index in selected: rand_index = randint(0, len(X) - 1)
                 selected.add(rand_index)
                 centroids.append(X[rand_index])
         return centroids
@@ -71,23 +72,25 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
         return self
     
     # get SSE of clusters
-    def sse(self):
+    def getSSE(self):
+        if len(self.sse) > 0: return self.sse
         self.sse = []
         for i, centroid in enumerate(self.centroids):
             self.sse.append(self.clusterSSE(centroid, self.clusters[i]))
-        return np.array(self.sse)
+        self.sse = np.array(self.sse)
+        return self.sse
     
     def clusterSSE(self, centroid, cluster):
         return np.square(cluster - centroid).sum(axis=None)
 
     def save_clusters(self,filename):
-        sse = self.sse()
+        self.sse = self.getSSE()
         f = open(filename,"w+")
         f.write("{:d}\n".format(self.k))
-        f.write("{:.4f}\n\n".format(sse.sum()))
+        f.write("{:.4f}\n\n".format(self.sse.sum()))
         for i, centroid in enumerate(self.centroids):
             f.write(np.array2string(centroid,precision=4,separator=","))
             f.write("\n")
             f.write("{:d}\n".format(len(self.clusters[i])))
-            f.write("{:.4f}\n\n".format(sse[i]))
+            f.write("{:.4f}\n\n".format(self.sse[i]))
         f.close()

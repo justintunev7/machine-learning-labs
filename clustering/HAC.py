@@ -2,25 +2,6 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClusterMixin
 import math
 
-
-class TreeNode():
-    def __init__(self, indices=set(()), left_child=None, right_child=None, distance=0):
-        self.indices = indices
-        self.left_child = left_child
-        self.right_child = right_child
-        self.distance = distance
-
-    def mergeCluster(self, new_indices, distance):
-        self.distance = distance
-        self.indices = self.indices.union(new_indices)
-
-    def getIndices(self):
-        return self.indices
-
-    def getDistance(self):
-        return self.distance
-
-
 class HACClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, k=3, link_type='single'):  # add parameters here
@@ -31,6 +12,7 @@ class HACClustering(BaseEstimator, ClusterMixin):
         """
         self.link_type = link_type
         self.k = k
+        self.sse = []
 
     def getDistancesFromInstance(self, instance):
         return np.linalg.norm(self.data-instance, axis=-1)
@@ -46,13 +28,15 @@ class HACClustering(BaseEstimator, ClusterMixin):
     def getUpdatedDistances(self, index1, index2):
         if self.link_type is 'single':
             new_row = np.min([self.distances[index1], self.distances[index2]], axis=0)
-            new_row = np.delete(new_row, [index1, index2])
-            mask = np.ones(len(self.distances), dtype=bool)
-            mask[[index1,index2]] = False
-            self.distances = self.distances[mask]
-            self.distances = self.distances[:,mask]
-            self.distances = np.vstack((self.distances, new_row))
-            self.distances = np.column_stack((self.distances, np.append(new_row, [math.inf])))
+        else:
+            new_row = np.max([self.distances[index1], self.distances[index2]], axis=0)
+        new_row = np.delete(new_row, [index1, index2])
+        mask = np.ones(len(self.distances), dtype=bool)
+        mask[[index1,index2]] = False
+        self.distances = self.distances[mask]
+        self.distances = self.distances[:,mask]
+        self.distances = np.vstack((self.distances, new_row))
+        self.distances = np.column_stack((self.distances, np.append(new_row, [math.inf])))
         return self.distances
 
     def join_clusters(self, index1, index2):
@@ -85,6 +69,7 @@ class HACClustering(BaseEstimator, ClusterMixin):
             indices = sorted([min_x, min_y], reverse=True)
             self.join_clusters(indices[0], indices[1])
             self.distances=self.getUpdatedDistances(indices[0], indices[1])
+        # print(self.clusters)
         self.testResult(self.clusters)
         return self
 
@@ -96,11 +81,14 @@ class HACClustering(BaseEstimator, ClusterMixin):
         return np.array(clusters)
 
     # get SSE of clusters
-    def sse(self):
-        self.sse=[]
+    def getSSE(self):
+        if len(self.sse) > 0: return self.sse
+        self.centroids = self.centroids()
+        # self.sse=[]
         for i, centroid in enumerate(self.centroids):
             self.sse.append(self.clusterSSE(centroid, self.data[list(self.clusters[i])]))
-        return np.array(self.sse)
+        self.sse = np.array(self.sse)
+        return self.sse
 
     def clusterSSE(self, centroid, cluster):
         return np.square(cluster - centroid).sum(axis=None)
@@ -113,8 +101,7 @@ class HACClustering(BaseEstimator, ClusterMixin):
 
 
     def save_clusters(self, filename):
-        self.centroids = self.centroids()
-        sse=self.sse()
+        sse=self.getSSE()
         f=open(filename, "w+")
         f.write("{:d}\n".format(self.k))
         f.write("{:.4f}\n\n".format(sse.sum()))
