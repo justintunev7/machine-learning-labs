@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from HAC import HACClustering
 from Kmeans import KMEANSClustering
+from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.metrics.cluster import silhouette_score
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
@@ -63,20 +65,50 @@ def split_data(X, y, test_split=.25):
         X, y, test_size=test_split)
     return X_train, X_test, y_train, y_test
 
-def kmeans(norm_data, k=5, debug=False, output_file=None):
-    KMEANS = KMEANSClustering(k=k,debug=debug)
+def kmeans(norm_data, k=5, debug=False, output_file=None, scikit=False):
+    KMEANS = KMeans(n_clusters=k) if scikit else KMEANSClustering(k=k,debug=debug)
     KMEANS.fit(norm_data)
     if output_file: KMEANS.save_clusters(output_file)
-    return KMEANS.getSSE().sum()
+    if scikit:
+        # print(KMEANS.inertia_)
+        return silhouette_score(norm_data, KMEANS.labels_)
+        # return KMEANS.inertia_
+    else:
+        return KMEANS.getSSE().sum()
 
 ### HAC SINGLE LINK ###
 # link_type = 'single' or 'complete'
 # output_file = debug_hac_complete.txt or debug_hac_single.txt or whatever
-def hac(norm_data, k=5, link_type='single', output_file=None):
-    HAC = HACClustering(k=k,link_type=link_type)
+def hac(norm_data, k=5, link_type='single', output_file=None, scikit=False):
+    HAC = AgglomerativeClustering(n_clusters=k, linkage=link_type) if scikit else HACClustering(k=k,link_type=link_type)
     HAC.fit(norm_data)
     if output_file: HAC.save_clusters(output_file)
-    return HAC.getSSE().sum()
+    if scikit:
+        # print(HAC.labels_)
+        return silhouette_score(norm_data, HAC.labels_)
+    else:
+        return HAC.getSSE().sum()
+
+def three():
+    data = setup_data('iris.arff', exclude_output=False)
+    tests = [2,3,4,5,6,7]
+    sse_results = {"kmean(scikit)": [], "hac_single(scikit)": [],  "hac_complete(scikit)": []}
+    for k in tests:
+        sse_results["kmean(scikit)"].append(kmeans(data, k=k, scikit=True))
+        sse_results["hac_single(scikit)"].append(hac(data, k=k, link_type='single', scikit=True))
+        sse_results["hac_complete(scikit)"].append(hac(data, k=k, link_type='complete', scikit=True))
+    plot_bar(sse_results, labels=tests, xlabel="K value", ylabel="Silhouette Score", title="SSE by K value (SKLearn)")
+
+    data = setup_data('diabetes.arff', exclude_output=False)
+    tests = [2,3,4,5,6,7]
+    sse_results = {"kmean(scikit)": [], "hac_single(scikit)": [],  "hac_complete(scikit)": []}
+    for k in tests:
+        sse_results["kmean(scikit)"].append(kmeans(data, k=k, scikit=True))
+        sse_results["hac_single(scikit)"].append(hac(data, k=k, link_type='single', scikit=True))
+        sse_results["hac_complete(scikit)"].append(hac(data, k=k, link_type='complete', scikit=True))
+    plot_bar(sse_results, labels=tests, xlabel="K value", ylabel="Silhouette Score", title="SSE by K value (SKLearn)")
+
+
 
 def two():
     data = setup_data('iris.arff', exclude_output=True)
@@ -100,8 +132,6 @@ def two():
     k=4
     for i in range(5):
         sse_results_3["kmeans"].append(kmeans(data, k=k, debug=False))
-        sse_results_3["hac_single"].append(hac(data, k=k, link_type='single'))
-        sse_results_3["hac_complete"].append(hac(data, k=k, link_type='complete'))
     plot_bar(sse_results_3, labels=[4,4,4,4,4], xlabel="K value", ylabel="SSE", title="SSE by K value (output label included)")
         
 def one():
@@ -120,13 +150,9 @@ def debug():
 def main():
     print("Starting tests")
     # debug()
-    one()
+    # one()
     # two()
-    # three()
-    # four()
-    # five()
-    # six()
-    # seven()
+    three()
     return
 
 

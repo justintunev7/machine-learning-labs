@@ -61,14 +61,6 @@ class KMEANSClustering(BaseEstimator,ClusterMixin):
             prev_centroids = copy(self.centroids)
             distances = self.getDistances(self.centroids)
             self.centroids = self.getNewCentroids(distances)
-        
-        """ Fit the data; In this lab this will make the K clusters :D
-        Args:
-            X (array-like): A 2D numpy array with the training data
-            y (array-like): An optional argument. Clustering is usually unsupervised so you don't need labels
-        Returns:
-            self: this allows this to be chained, e.g. model.fit(X,y).predict(X_test)
-        """
         return self
     
     # get SSE of clusters
