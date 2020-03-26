@@ -14,9 +14,11 @@ class HACClustering(BaseEstimator, ClusterMixin):
         self.k = k
         self.sse = []
 
+    # Gets distances from each instance to the current instance
     def getDistancesFromInstance(self, instance):
         return np.linalg.norm(self.data-instance, axis=-1)
 
+    # Gets initial distances
     def getDistances(self, data):
         distances = np.empty((0, len(self.data)))
         for instance in data:
@@ -25,6 +27,7 @@ class HACClustering(BaseEstimator, ClusterMixin):
         np.fill_diagonal(distances, math.inf)
         return distances
 
+    # Update the distance matrix with combined clusters
     def getUpdatedDistances(self, index1, index2):
         if self.link_type is 'single':
             new_row = np.min([self.distances[index1], self.distances[index2]], axis=0)
@@ -39,6 +42,7 @@ class HACClustering(BaseEstimator, ClusterMixin):
         self.distances = np.column_stack((self.distances, np.append(new_row, [math.inf])))
         return self.distances
 
+    # Merge two clusters together
     def join_clusters(self, index1, index2):
         clusters_to_join=[]
         for index in [index1, index2]:
@@ -47,6 +51,8 @@ class HACClustering(BaseEstimator, ClusterMixin):
         self.clusters.append(cluster)
         return cluster
     
+    # A simple error check to make sure that all clusters are disjoint and when
+    # combined, they include all data instances
     def testResult(self, clusters):
         final_set=set(())
         for cluster in self.clusters:
@@ -56,17 +62,20 @@ class HACClustering(BaseEstimator, ClusterMixin):
             final_set=final_set.union(cluster)
         if len(final_set) < len(self.data): print("ERROR: Clusters do not cover dataset")
 
+    # Gets indices of the next closest pair of clusters
+    def getIndicesOfMinDistance(self):
+        min_index=np.argmin(self.distances)
+        min_x=math.floor(min_index / len(self.distances[0]))
+        min_y=math.floor(min_index % len(self.distances[0]))
+        # sort the indices to avoid problems later with deleting stuff out of order
+        return sorted([min_x, min_y], reverse=True)
 
     def fit(self, X, y=None):
         self.data=np.array(X)
         self.clusters=[{i} for i in range(len(self.data))]
         self.distances=self.getDistances(self.data)
         while len(self.clusters) > self.k:
-            min_index=np.argmin(self.distances)
-            min_x=math.floor(min_index / len(self.distances[0]))
-            min_y=math.floor(min_index % len(self.distances[0]))
-            # sort the indices to avoid problems later with deleting stuff out of order
-            indices = sorted([min_x, min_y], reverse=True)
+            indices = self.getIndicesOfMinDistance()
             self.join_clusters(indices[0], indices[1])
             self.distances=self.getUpdatedDistances(indices[0], indices[1])
         # print(self.clusters)
