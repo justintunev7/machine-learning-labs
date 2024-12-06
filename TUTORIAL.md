@@ -6,16 +6,16 @@ This short tutorial demonstrates some basic functionality of Python and NumPy, a
 For reproducibility, it's important to create an "environment" that will house the precise set of modules/versions that our code is guaranteed to work with. They are many ways to manage environments, including Anaconda (or mini-conda), virtualenv, and Docker. For this class, we recommend using [Anaconda](https://www.anaconda.com/distribution/#download-section). After installing Anaconda, you can create an environment. For CS 472, we should be able to run your code with an environment created with the commandline command:
 
  ```
- conda create -n cs472 matplotlib=3.0.3 numpy=1.16.3 numpy-base=1.16.3 pandas=0.24.2 python=3.6.8 scikit-learn=0.20.3 scipy=1.2.1
+ conda create -n csNum matplotlib=3.0.3 numpy=1.16.3 numpy-base=1.16.3 pandas=0.24.2 python=3.6.8 scikit-learn=0.20.3 scipy=1.2.1
  ```
 
-To activate the CS472 environment you just created, run:
+To activate the csNum environment you just created, run:
 
-```conda activate cs472```
+```conda activate csNum```
 
 A good practice is to store your environment as a `.yaml` file.
 ```
-name: cs472
+name: csNum
 channels:
   - defaults
 dependencies:

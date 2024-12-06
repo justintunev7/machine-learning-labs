@@ -1,4 +1,4 @@
-name: cs472
+name: csNUM
 channels:
   - defaults
 dependencies:
